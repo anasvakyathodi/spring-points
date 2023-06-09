@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spring Point Estimation</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body data-bs-theme="dark">
+    <nav class="navbar bg-body-tertiary">
+      <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">Sprint Point Estimator</span>
+      </div>
+    </nav>
+    <div class="container">
+      <form id="form-element">
+        <div class="my-3">
+          <div
+            class="d-flex w-100 justify-content-between flex-row flex-between w-100"
+          >
+            <label for="hourInput" class="form-label">Total Working Time</label>
+            <div class="d-flex gap-3">
+              <label
+                class="form-check-label"
+                for="changeInputSwitch"
+                id="switchLabel"
+                >Select from List</label
+              >
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="changeInputSwitch"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="firstInput input-group d-none">
+            <input
+              type="number"
+              class="form-control"
+              id="hourInput"
+              name="days"
+              aria-describedby="hourHelp"
+            />
+            <span class="input-group-text" id="basic-addon2">days</span>
+          </div>
+          <div class="firstInput input-group">
+            <select
+              class="form-select"
+              aria-label="Default select example"
+              name="duration"
+              id="daysSelector"
+            >
+              <option selected>Select Duration</option>
+              <option value="1">< 2 hours</option>
+              <option value="2">4 hours</option>
+              <option value="24">1 day</option>
+              <option value="48">2 days</option>
+              <option value="72">3 days</option>
+              <option value="168">1 week</option>
+              <option value="336">2 weeks</option>
+            </select>
+          </div>
+          <div id="hourHelp" class="form-text">Pass 1 as the minimum hour</div>
+        </div>
+        <div class="mb-3">
+          <label for="exampleInputPassword1" class="form-label"
+            >Total Tasks in Hand</label
+          >
+          <select
+            class="form-select"
+            aria-label="Default select example"
+            name="tasks"
+          >
+            <option selected>Select Tasks Count</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Calculate</button>
+        <hr />
+        <h1 id="output" class="my-3"></h1>
+      </form>
+    </div>
+    <script>
+      const form = document.querySelector("#form-element");
+      form.addEventListener("submit", handleSubmit);
+
+      function calculatePoints(input) {
+        if (input < 2) {
+          return 1;
+        } else if (input === 2) {
+          return 2;
+        } else if (input === 24) {
+          return 3;
+        } else if (input === 48) {
+          return 5;
+        } else if (input === 72) {
+          return 8;
+        } else if (input === 168) {
+          return 13;
+        } else if (input === 336) {
+          return 21;
+        } else if (input > 336) {
+          // Handle inputs greater than 2 weeks separately
+          return Math.floor(input / 24) + 8;
+        } else {
+          // Calculate values in between using interpolation
+          var hours = [2, 24, 48, 72, 168, 336];
+          var values = [1, 2, 5, 8, 13, 21];
+
+          for (var i = 1; i < hours.length; i++) {
+            if (input < hours[i]) {
+              var range = hours[i] - hours[i - 1];
+              var ratio = (input - hours[i - 1]) / range;
+              var valueRange = values[i] - values[i - 1];
+              return Math.round(values[i - 1] + ratio * valueRange);
+            }
+          }
+        }
+      }
+
+      let switchFlag = false;
+      function handleSubmit(e) {
+        e.preventDefault();
+        const days = Number(e.target.elements.days.value);
+        const tasks = Number(e.target.elements.tasks.value);
+        const duration = Number(e.target.elements.duration.value);
+        const output = document.querySelector("#output");
+
+        if ((!switchFlag && isNaN(duration)) || (switchFlag && days === 0)) {
+          output.textContent = "Please Insert Total Duration";
+          return;
+        }
+
+        const totalPoints = calculatePoints(switchFlag ? days * 24 : duration);
+
+        if (!isNaN(tasks)) {
+          output.textContent = `You can give up to ${Math.floor(
+            totalPoints / tasks
+          )} points for each ${tasks} tasks`;
+        } else {
+          output.textContent = `You can give up to ${totalPoints} points for the task`;
+        }
+      }
+
+      const switchInput = document.querySelector("#changeInputSwitch");
+      const switchLabel = document.querySelector("#switchLabel");
+      const container = document.querySelectorAll(".firstInput");
+
+      switchInput.addEventListener("click", (e) => {
+        switchFlag = !switchFlag;
+        container.forEach((el) => el.classList.toggle("d-none"));
+        if (switchFlag) {
+          switchLabel.textContent = "In Days";
+        } else {
+          switchLabel.textContent = "Select from List";
+        }
+      });
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
